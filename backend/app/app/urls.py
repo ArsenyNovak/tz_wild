@@ -17,6 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+from wb.views import ProductListAPIView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/products/', ProductListAPIView.as_view()),
 ]
+
