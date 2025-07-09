@@ -40,6 +40,8 @@ def add_data_from_page(url):
     for item in response['products']:
         product = Product(name=item['name'],
                           price=str(item['sizes'][0]['price']['basic'] / 100),
+                          price_sale=str((item['sizes'][0]['price']['product'] +
+                                         item['sizes'][0]['price']['logistics']) / 100),
                           rating=item['reviewRating'],
                           count_comment=item['feedbacks']
                           )
