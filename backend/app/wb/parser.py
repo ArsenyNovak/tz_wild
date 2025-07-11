@@ -42,20 +42,23 @@ def add_data_from_page(url, session):
 
         # Process successful response
         data = response.json()
-        for item in data['products']:
-            product = Product(name=item['name'],
-                              price=str(item['sizes'][0]['price']['basic'] / 100),
-                              price_sale=str((item['sizes'][0]['price']['product'] +
-                                              item['sizes'][0]['price']['logistics']) / 100),
-                              rating=item['reviewRating'],
-                              count_comment=item['feedbacks']
-                              )
-            product.save()
-        if data['products']:
-            print(f"Добавлено товаров: {len(data['products'])}")
+        if data.get('products'):
+            for item in data['products']:
+                product = Product(name=item['name'],
+                                  price=str(item['sizes'][0]['price']['basic'] / 100),
+                                  price_sale=str((item['sizes'][0]['price']['product'] +
+                                                  item['sizes'][0]['price']['logistics']) / 100),
+                                  rating=item['reviewRating'],
+                                  count_comment=item['feedbacks']
+                                  )
+                product.save()
+            if data['products']:
+                print(f"Добавлено товаров: {len(data['products'])}")
+            else:
+                print('Загрузка товаров завершена')
+                return True
         else:
-            print('Загрузка товаров завершена')
-            return True
+            print(data)
 
     except requests.exceptions.RequestException as e:
         print(f"Error fetching page: {str(e)}")
@@ -74,7 +77,7 @@ def get_all_products_in_category(category_data):
 
 def get_all_products_in_search(user_input):
     session = requests.Session()
-    for page in range(1, 61):
+    for page in range(1, 100):
         print(f"Загружаю товары со страницы {page}")
         url = (f"https://search.wb.ru/exactmatch/sng/common/v14/search?ab_testing=false&appType=1&curr=byn&dest=-59202"
                f"&lang=ru&page={page}&query={'%20'.join(user_input.split())}&resultset=catalog"
