@@ -35,40 +35,51 @@ def extract_category(flat_catalogue, user_input):
     return None
 
 
-def add_data_from_page(url):
-    response = requests.get(url, headers=HEADERS).json()
-    for item in response['products']:
-        product = Product(name=item['name'],
-                          price=str(item['sizes'][0]['price']['basic'] / 100),
-                          price_sale=str((item['sizes'][0]['price']['product'] +
-                                         item['sizes'][0]['price']['logistics']) / 100),
-                          rating=item['reviewRating'],
-                          count_comment=item['feedbacks']
-                          )
-        product.save()
-    if response['products']:
-        print(f"Добавлено товаров: {len(response['products'])}")
-    else:
-        print('Загрузка товаров завершена')
-        return True
+def add_data_from_page(url, session):
+    try:
+        response = session.get(url, headers=HEADERS)
+        response.raise_for_status()
+
+        # Process successful response
+        data = response.json()
+        for item in data['products']:
+            product = Product(name=item['name'],
+                              price=str(item['sizes'][0]['price']['basic'] / 100),
+                              price_sale=str((item['sizes'][0]['price']['product'] +
+                                              item['sizes'][0]['price']['logistics']) / 100),
+                              rating=item['reviewRating'],
+                              count_comment=item['feedbacks']
+                              )
+            product.save()
+        if data['products']:
+            print(f"Добавлено товаров: {len(data['products'])}")
+        else:
+            print('Загрузка товаров завершена')
+            return True
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching page: {str(e)}")
+
 
 
 def get_all_products_in_category(category_data):
-    for page in range(1, 10):
+    session = requests.Session()
+    for page in range(1, 100):
         print(f"Загружаю товары со страницы {page}")
         url = (f"https://catalog.wb.ru/catalog/{category_data[1]}/v4/catalog?ab_testing=false&appType=1"
                f"&{category_data[2]}&curr=byn&dest=-59202&lang=ru&page={page}&sort=popular&spp=30")
-        if add_data_from_page(url):
+        if add_data_from_page(url, session):
             break
 
 
 def get_all_products_in_search(user_input):
-    for page in range(1, 10):
+    session = requests.Session()
+    for page in range(1, 61):
         print(f"Загружаю товары со страницы {page}")
         url = (f"https://search.wb.ru/exactmatch/sng/common/v14/search?ab_testing=false&appType=1&curr=byn&dest=-59202"
                f"&lang=ru&page={page}&query={'%20'.join(user_input.split())}&resultset=catalog"
                f"&sort=popular&spp=30&suppressSpellcheck=false")
-        if add_data_from_page(url):
+        if add_data_from_page(url, session):
             break
 
 def start():
@@ -90,3 +101,6 @@ def start():
         get_all_products_in_search(user_input)
     else:
         print('введено не корректное значение')
+
+
+
